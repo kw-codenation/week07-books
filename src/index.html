@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books</title>
+    <style>
+        body
+        {
+            background-color: bisque;
+            color:
+        }
+        .title
+        {
+            font-family:century gothic;
+            font-size:10vh;
+            color:brown;
+        }
+        .sub-title
+        {
+            font-family:trebuchet ms;
+            font-size:6vh;
+            color:brown;
+        }
+        .menu-item
+        {
+            display:inline-block;
+            text-decoration: none;
+            background-color:sandybrown;
+            border:solid 2px saddlebrown;
+            color:saddlebrown;
+            font-family:trebuchet ms;
+            font-size:3vh;
+            text-align:center;
+            width:10vw;
+            cursor:pointer;
+        }
+        .menu-item:hover
+        {
+            background-color:saddlebrown;
+            border-color:sandybrown;
+            color:sandybrown;
+        }
+        .list-item
+        {
+            background-color: transparent;
+            border:none;
+            font-size:4vh;
+            color:saddlebrown;
+            width:40vw;
+            cursor:pointer;
+        }
+        .list-item:hover
+        {
+            color: sandybrown;
+        }
+
+        .label
+        {
+            font-family:verdana;
+            color:saddlebrown
+        }
+
+        .home
+        {
+            margin-top:5vh;
+            font-family:trebuchet ms;
+            font-size:4vh;
+            color:saddlebrown;
+        }
+
+        .data
+        {
+            font-family:verdana;
+            color:brown;
+            font-style:italic;
+        }
+
+        .input-data
+        {
+            background-color:transparent;
+            border:none;
+            font-size:3vh;
+            color:brown;
+        }
+
+        .action-button
+        {
+            background-color: sandybrown;
+            border:solid 2px saddlebrown;
+            color:saddlebrown;
+            border-radius:0.5vw;
+            cursor:pointer;
+        }
+        .action-button:hover
+        {
+            background-color:saddlebrown;
+            border-color: sandybrown;
+            color:sandybrown;
+        }
+        .message
+        {
+            font-family:verdana;
+            font-style:italic;
+            color:saddlebrown;
+        }
+    </style>
+    <script>
+        function List()
+        {
+            /*
+                List all the documents to the web page
+            */
+            const request = new XMLHttpRequest()
+            request.open('GET', 'http://localhost:5001/books/get/{}')
+            request.setRequestHeader('Content-Type', 'application/json')
+            request.setRequestHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+            request.setRequestHeader('Access-Control-Allow-Origin', '*')
+            request.send()
+            request.onload = function() 
+            {
+                if (request.status != 201) 
+                {
+                    page.innerHTML = '<div>Error List() books: ' + request.status + ': ' + request.statusText + '</div>'
+                }
+                else 
+                {
+ 
+                    let data = JSON.parse(request.response)
+                    let html = '<div class="sub-title" align="center">titles<div style="height:50vh;overflow:auto"><table>'
+        
+                    if (data['count'] === 0)
+                    {
+                        html += '<tr><td style="font-size:3vh">There are no documents on the "book" database</td></tr>'
+                    }
+                    else
+                    {
+                        for (let i in data['books'])
+                        {
+                            const book = '{id:' + data['books'][i].id +
+                                    ',title:`' + data['books'][i].title + '`' +
+                                    ',author:`' + data['books'][i].author + '`' +
+                                    ',genre:`' + data['books'][i].genre + '`' +
+                                    '}'
+
+                            html += '<tr><td><input type="text" class="list-item" value="' + data['books'][i].title + '" onclick="View(' + book + ')" readonly></td></tr>'
+                        }
+                    }
+
+                    html += '</table>'
+                    html += '</div><span class="data" style="font-size:3vh" align="left">' + data['count'] + ' document(s) found</span></div>'
+
+                    page.innerHTML = html
+                }
+            }
+        }
+
+        function View(book)
+        {
+            /*
+                View a single book entry
+            */
+            let html = '<table align="center"><tr><td colspan="100%" style="font-family:trebuchet ms;font-size:8vh;color:saddlebrown">' + book.title + '</td></tr>'
+            html += '<tr><td class="label">Author: </td><td class="data">' +  book.author + '</td></tr>'
+            html += '<tr><td class="label">Genre: </td><td class="data">' +  book.genre + '</td></tr>'
+            html += '<tr><td class="label">Id: </td><td class="data">' +  book.id + '</td></tr>'
+            html += '<tr>'
+            html += '<td colspan="100%">'
+            html += '<input type="button" class="action-button" value="delete" onclick="Delete({id:' + book.id + ', title:`' + book.title + '`})">'
+            html += '<input type="button" class="action-button" value="edit" onclick="Edit({id:' + book.id + ', title:`' + book.title + '`, author:`' + book.author + '`, genre:`' + book.genre + '`})">'
+            html += '</td>'
+            html += '</tr>'
+            html += '</table>'
+
+            page.innerHTML = html
+        }
+
+        function Load(book)
+        {
+            /*
+                Load multiple books to the database. The hard-coded
+                data is on server.js
+            */
+            const request = new XMLHttpRequest()
+            request.open('POST', 'http://localhost:5001/books/add/many')
+            request.setRequestHeader('Content-Type', 'application/json')
+            request.setRequestHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+            request.setRequestHeader('Access-Control-Allow-Origin', '*')
+            request.send()
+            request.onload = function() 
+            {
+                if (request.status != 201) 
+                {
+                    page.innerHTML = '<div class="message" align="center">Error add many records to Book' + request.status + ': ' + request.statusText + '</div>'
+                }
+                else 
+                {
+                    const response = JSON.parse(request.response)
+                    page.innerHTML = '<div class="message" align="center">' + response.message + '</div>'
+                }
+            }           
+        }
+
+        function Add()
+        {
+            /*
+                Get book data from the user to be added to the database
+            */
+            let html = '<form name="book">'
+            html += '<table align="center">'
+            html += '<tr>'
+            html += '   <td class="sub-title" colspan="100%" align="center">add a book</td>'
+            html += '</tr>'
+            html += '<tr>'
+            html += '   <td class="label">Id:</td>'
+            html += '   <td><input id="id" name="id" type="text"></td>'
+            html += '<tr>'
+            html += '   <td class="label">Title:</td>'
+            html += '   <td><input id="title" name="title" type="text"></td>'
+            html += '<tr>'
+            html += '   <td class="label">Author:</td>'
+            html += '   <td><input id="author" name="author" type="text"></td>'
+            html += '<tr>'
+            html += '   <td class="label">Genre:</td>'
+            html += '   <td><input id="genre" name="genre" type="text"></td>'
+            html += '<tr>'
+            html += '   <td colspan="100%">'
+            html += '       <input type="button" class="action-button" value="submit" onclick="Validate()">'
+            html += '   </td>'
+            html += '</tr>'
+            html += '</table>'
+            html += '</form>'
+
+            page.innerHTML = html
+        }
+
+        function Validate()
+        {
+            /*
+                Validate input from the Add Book page
+            */
+            let status = true
+
+            if (status)
+            {
+                let book =
+                    {"id": document.getElementById('id').value
+                    ,"title": document.getElementById('title').value
+                    ,"author": document.getElementById('author').value
+                    ,"genre": document.getElementById('genre').value
+                    }
+
+                Create(book)
+            }
+        }
+
+        function Create(book)
+        {
+            /*
+                Add book item onto the database
+            */
+            const data = JSON.stringify(book);
+            const create = new XMLHttpRequest()
+            create.open('POST', 'http://localhost:5001/books/add')
+            create.setRequestHeader('Content-Type', 'application/json')
+            create.setRequestHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+            create.setRequestHeader('Access-Control-Allow-Origin', '*')
+            create.send(data)
+
+            create.onload = function() 
+            {
+                if (create.status != 202) 
+                {
+                    page.innerHTML = '<div class="message" align="center">Error Create(): ' + create.status + ': ' + create.statusText + '</div>'
+                }
+                else
+                {
+                    View(book)
+                } 
+            }
+        }
+
+        function Edit(book)
+        {
+            /*
+                Input page to change a single book entry
+            */
+
+            let html = '<table align="center">'
+            html += '<tr>'
+            html += '   <td class="sub-title" colspan="100%" align="center">edit a book</td>'
+            html += '</tr>'
+            html += '<tr>'
+            html += '   <td class="label">Id:</td>'
+            html += '   <td><input id="edit-id" name="id" type="text" value="' + book.id + '"></td>'
+            html += '<tr>'
+            html += '   <td class="label">Title:</td>'
+            html += '   <td><input id="edit-title" name="title" type="text" value="' + book.title + '"></td>'
+            html += '   <td><input type="button" class="action-button" value="change" onclick="Update(`title`)"></td>'
+            html += '<tr>'
+            html += '   <td class="label">Author:</td>'
+            html += '   <td><input id="edit-author" name="author" type="text" value="' + book.author + '"></td>'
+            html += '   <td><input type="button" class="action-button" value="change" onclick="Update(`author`)"></td>'
+            html += '<tr>'
+            html += '   <td class="label">Genre:</td>'
+            html += '   <td><input id="edit-genre" name="genre" type="text" value="' + book.genre + '"></td>'
+            html += '   <td><input type="button" class="action-button" value="change" onclick="Update(`genre`)"></td>'
+            html += '</table>'
+
+            page.innerHTML = html
+        }
+
+        function Update(type)
+        {
+            /*
+                Update database with the new book item changes
+            */
+            const book = {id:0, title:'', author:'', genre:''}
+            book.id = document.getElementById('edit-id').value
+            book.title = document.getElementById('edit-title').value
+            book.author = document.getElementById('edit-author').value
+            book.genre = document.getElementById('edit-genre').value
+
+            let link = ''
+            switch (type)
+            {
+                case 'title': link = 'http://localhost:5001/books/update/title/' + book.id + '/' + book.title;break; 
+                case 'author': link = 'http://localhost:5001/books/update/author/' + book.id + '/' + book.author;break; 
+            }
+            link = 'http://localhost:5001/books/update'
+            let data = JSON.stringify
+                (
+                    {id:book.id
+                    ,key:type
+                    ,value:book[type]
+                    }
+                )
+        
+            const request = new XMLHttpRequest()
+            request.open('PUT', link)
+            request.setRequestHeader('Content-Type', 'application/json')
+            request.setRequestHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+            request.setRequestHeader('Access-Control-Allow-Origin', '*')
+            request.send(data)
+            request.onload = function() 
+            {
+                if (request.status != 202) 
+                {
+                    page.innerHTML = '<div class="message" align="center">Error Update() ' + type + ' on Book id: ' + book.id + ' ' + request.status + ': ' + request.statusText + '</div>'
+                }
+                else 
+                {
+                    View(book)
+                    //page.innerHTML = '<div class="message" align="center">"' + type + '" entry has been change</div>'
+                }
+            } 
+        }
+
+        function Delete(book)
+        {
+            /*
+                delete a single book item from the database
+            */
+            const request = new XMLHttpRequest()
+            request.open('DELETE', 'http://localhost:5001/books/delete/' + book.id)
+            request.setRequestHeader('Content-Type', 'application/json')
+            request.setRequestHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+            request.setRequestHeader('Access-Control-Allow-Origin', '*')
+            request.send()
+            request.onload = function() 
+            {
+                if (request.status != 203) 
+                {
+                    page.innerHTML = '<div class="message" align="center">Error Delete() book: ' + request.status + ': ' + request.statusText + '</div>'
+                }
+                else 
+                {
+                    page.innerHTML = '<div class="message" align="center">"' + book.title + '" has been deleted from the database</div>'
+                }
+            }           
+        }
+
+        function DeleteAll(book)
+        {
+            /*
+                Delete the entire book database
+            */
+            const request = new XMLHttpRequest()
+            request.open('DELETE', 'http://localhost:5001/books/delete/all')
+            request.setRequestHeader('Content-Type', 'application/json')
+            request.setRequestHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+            request.setRequestHeader('Access-Control-Allow-Origin', '*')
+            request.send()
+            request.onload = function() 
+            {
+                if (request.status != 203) 
+                {
+                    page.innerHTML = '<div class="message" align="center">Error DeleteAll() - ' + request.status + ': ' + request.statusText + '</div>'
+                }
+                else 
+                {
+                    const response = JSON.parse(request.response)
+                    page.innerHTML = '<div class="message" align="center">' + response.message + '</div>'
+                }
+            }           
+        }
+
+        function Search()
+        {
+            /*
+                User input for searching the database according to
+                a particular critera
+            */
+            let html = '<div align="center"><div class="sub-title">search</div>'
+            html += '<select id="search">'
+            html += '<option value="">Please select a search option</option>'
+            html += '<option value="title">title</option>'
+            html += '<option value="author">author</option>'
+            html += '<option value="genre">genre</option>'
+            html += '</select>'
+            html += '<input id="data" type="text"><br>'
+            html += `<div class="data"><br>select 'author', input an author name and click search will bring back a list of books written by that author<br><br></div>`
+            html += `<div class="data"><br>select 'author', input '*' and click search will bring back a list of authors<br><br></div>`
+            html += '<input type="button" class="action button" value="search" onclick="Find()">'
+
+            page.innerHTML = html
+        }
+
+        function Find()
+        {
+            /*
+                Find book data according to a particular critera
+            */
+            const type = document.getElementById('search').value
+            const criteria = document.getElementById('data').value
+            let link = 'http://localhost:5001/books/get/{"' + type + '":"' + criteria + '"}'
+
+            if (criteria == '*')
+            {
+                link = 'http://localhost:5001/books/search/' + type
+            }
+            
+            const request = new XMLHttpRequest()
+            request.open('GET', link)
+            request.setRequestHeader('Content-Type', 'application/json')
+            request.setRequestHeader('Access-Control-Allow-Headers', 'Authorization,Content-Type')
+            request.setRequestHeader('Access-Control-Allow-Origin', '*')
+            request.send()
+            request.onload = function() 
+            {
+                if (request.status != 201) 
+                {
+                    page.innerHTML = '<div class="message" align="center">Error Find() search for ' + type + ' ' + criteria + ' - ' + request.status + ': ' + request.statusText + '</div>'
+                }
+                else 
+                {
+                    let data = JSON.parse(request.response)
+                    let html = '<div class="sub-title" align="center">search<table>'
+                    html += '<div class="data" align="center">Search for ' + type + ' ' + criteria + '<table>'
+                    
+                    if (criteria === '*')
+                    {
+                        for (let i in data['list'])
+                        {
+                            html += '<tr><td><input type="text" class="input-data" value="' + data['list'][i] + '" readonly></td></tr>'
+                        }
+
+                    }
+                    else
+                    {
+                        for (let i in data['books'])
+                        {
+                            const book = '{id:' + data['books'][i].id +
+                                    ',title:`' + data['books'][i].title + '`' +
+                                    ',author:`' + data['books'][i].author + '`' +
+                                    ',genre:`' + data['books'][i].genre + '`' +
+                                   '}'
+
+                            html += '<tr><td><input type="text" class="list-item" value="' + data['books'][i].title + '" onclick="View(' + book + ')" readonly></td></tr>'
+                        }
+                    }
+
+                    html += '</table></div>'
+
+                    page.innerHTML = html
+                }
+            }               
+        }
+    </script>
+</head>
+<body>
+    <div class="title" align="center">books</div>
+
+    <table cellspacing="10" border="0" class="menu" align="center">
+        <tr>
+            <td><input type="button" class="menu-item" onclick="List()" value="list"></td>
+            <td><input type="button" class="menu-item" onclick="Add()" value="add"></td>
+            <td><input type="button" class="menu-item" onclick="DeleteAll()" value="delete"></td>
+            <td><input type="button" class="menu-item" onclick="Load()" value="load"></td>
+            <td><input type="button" class="menu-item" onclick="Search()" value="search"></td>
+        </tr>
+    </table>
+
+    <form name="page" align="center">
+        <table class="home" align="center">
+            <tr>
+                <td>list</td>
+                <td>-</td>
+                <td>display all books on the database</td>
+            </tr>
+            <tr>
+                <td>add</td>
+                <td>-</td>
+                <td>add a book to the database</td>
+            </tr>
+            <tr>
+                <td>delete</td>
+                <td>-</td>
+                <td>delete all books from the database (will happen on clicking 'delete')</td>
+            </tr>
+            <tr>
+                <td>load</td>
+                <td>-</td>
+                <td>load books from the database (will happen on clicking 'load')</td>
+            </tr>
+            <tr>
+                <td>search</td>
+                <td>-</td>
+                <td>search database according to certain criteria</td>
+            </tr>
+        </table>
+    </form>
+
+</body>
+</html>
